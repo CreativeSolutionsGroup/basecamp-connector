@@ -1,0 +1,60 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Setting {
+  key   String @id
+  value String
+
+  @@map("settings")
+}
+
+model Form {
+  id         String @id @default(cuid())
+  formId     String @map("form_id")
+  formFields Json   @map("form_fields")
+
+  responses   Response[]
+  connections Connection[]
+
+  @@map("forms")
+}
+
+model Response {
+  id           String @id @default(cuid())
+  responseId   String @map("response_id")
+  responseData Json   @map("response_data")
+
+  connectionId String     @map("connection_id")
+  connection   Connection @relation(fields: [connectionId], references: [id])
+
+  formId String @map("form_id")
+  form   Form   @relation(fields: [formId], references: [id])
+
+  @@map("responses")
+}
+
+model Connection {
+  id      String         @id @default(cuid())
+  type    ConnectionType @map("type")
+  content String         @map("content")
+  formId  String         @map("form_id")
+
+  form Form @relation(fields: [formId], references: [id])
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  responses Response[]
+
+  @@map("connections")
+}
+
+enum ConnectionType {
+  BASECAMP_CARD
+  BASECAMP_TODO
+}

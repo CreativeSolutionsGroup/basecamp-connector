@@ -1,0 +1,16 @@
+{
+  "timeZone": "America/New_York",
+  "addOns": {
+    "common": {
+      "name": "Basecamp Form Sync",
+      "logoUrl": "https://your-logo-url.png"
+    },
+    "forms": {
+      "onFormOpenTrigger": { "runFunction": "onFormOpen" }
+    }
+  },
+  "oauthScopes": [
+    "https://www.googleapis.com/auth/forms.currentonly",
+    "https://www.googleapis.com/auth/script.scriptapp"
+  ]
+}
