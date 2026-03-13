@@ -1,0 +1,92 @@
+[
+  {
+    "title": "Radio Buttons",
+    "itemId": "431dad4a",
+    "questionItem": {
+      "question": {
+        "questionId": "42fb4600",
+        "choiceQuestion": {
+          "type": "RADIO",
+          "options": [
+            {
+              "value": "Option 1"
+            },
+            {
+              "value": "Option 2"
+            },
+            {
+              "value": "Option 3"
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "title": "Short Answer",
+    "itemId": "15d0c779",
+    "questionItem": {
+      "question": {
+        "questionId": "3744a36a",
+        "textQuestion": {}
+      }
+    }
+  },
+  {
+    "title": "Paragraph",
+    "itemId": "0a736a7f",
+    "questionItem": {
+      "question": {
+        "questionId": "79e1a6db",
+        "textQuestion": {
+          "paragraph": true
+        }
+      }
+    }
+  },
+  {
+    "title": "Checkboxes",
+    "itemId": "42d3dde6",
+    "questionItem": {
+      "question": {
+        "questionId": "09f4f6bb",
+        "choiceQuestion": {
+          "type": "CHECKBOX",
+          "options": [
+            {
+              "value": "Option 1"
+            },
+            {
+              "value": "Option 2"
+            },
+            {
+              "value": "Option 3"
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "title": "Date",
+    "itemId": "45bbf13f",
+    "questionItem": {
+      "question": {
+        "questionId": "6a4e166b",
+        "dateQuestion": {
+          "includeYear": true
+        }
+      }
+    }
+  },
+  {
+    "title": "Time",
+    "itemId": "5c73dca6",
+    "questionItem": {
+      "question": {
+        "questionId": "5015b30e",
+        "timeQuestion": {}
+      }
+    }
+  }
+]

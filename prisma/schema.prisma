@@ -15,7 +15,8 @@ model Setting {
 
 model Form {
   id         String @id @default(cuid())
-  formId     String @map("form_id")
+  title      String
+  formId     String @unique @map("form_id")
   formFields Json   @map("form_fields")
 
   responses   Response[]
@@ -42,9 +43,15 @@ model Connection {
   id      String         @id @default(cuid())
   type    ConnectionType @map("type")
   content String         @map("content")
-  formId  String         @map("form_id")
 
-  form Form @relation(fields: [formId], references: [id])
+  basecampProjectId String @map("basecamp_project_id")
+  basecampSubItemId String @map("basecamp_sub_item_id")
+
+  routingQuestionId String? @map("routing_question_id")
+  routingValue      String? @map("routing_value")
+
+  formId String @map("form_id")
+  form   Form   @relation(fields: [formId], references: [id])
 
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)

@@ -1,0 +1,54 @@
+export interface ParsedFormField {
+  questionId: string;
+  title: string;
+  type: "text" | "choice" | "date" | "time";
+  options?: string[];
+}
+
+function getFieldTypeInfo(
+  question: Record<string, unknown>
+): Pick<ParsedFormField, "type" | "options"> {
+  if (question.choiceQuestion) {
+    const cq = question.choiceQuestion as { options: { value: string }[] };
+    return { type: "choice", options: cq.options.map((o) => o.value) };
+  }
+  if (question.dateQuestion) return { type: "date" };
+  if (question.timeQuestion) return { type: "time" };
+  return { type: "text" };
+}
+
+export function parseFormFields(raw: unknown): ParsedFormField[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .filter(
+      (item) =>
+        typeof item === "object" &&
+        item !== null &&
+        item.questionItem?.question?.questionId
+    )
+    .map((item) => ({
+      questionId: item.questionItem.question.questionId,
+      title: item.title as string,
+      ...getFieldTypeInfo(item.questionItem.question),
+    }));
+}
+
+export function getFormIDFromURL(url: string): string | null {
+  try {
+    const parsed = new URL(url);
+    if (
+      parsed.hostname === "docs.google.com" &&
+      parsed.pathname.startsWith("/forms/")
+    ) {
+      const parts = parsed.pathname.split("/");
+      const formIndex = parts.findIndex((part) => part === "forms");
+      if (formIndex !== -1 && parts.length > formIndex + 2) {
+        return parts[formIndex + 2];
+      }
+    }
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  } catch (e) {
+    // Invalid URL
+  }
+  return null;
+}
