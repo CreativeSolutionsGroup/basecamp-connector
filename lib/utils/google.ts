@@ -28,9 +28,9 @@ export function parseFormFields(raw: unknown): ParsedFormField[] {
       currentSection = (item.title as string) || undefined;
       continue;
     }
-    if (!item.questionItem?.question?.questionId) continue;
+    if (!item.itemId || !item.questionItem?.question) continue;
     fields.push({
-      questionId: item.questionItem.question.questionId,
+      questionId: item.itemId as string,
       title: item.title as string,
       ...getFieldTypeInfo(item.questionItem.question),
       sectionTitle: currentSection,
