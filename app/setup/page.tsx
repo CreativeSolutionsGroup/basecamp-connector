@@ -2,6 +2,14 @@ import { db } from "@/lib/db";
 import { IconChevronLeft } from "@tabler/icons-react";
 import Link from "next/link";
 
+const BASECAMP_AUTH_URL =
+  "https://launchpad.37signals.com/authorization/new?" +
+  new URLSearchParams({
+    type: "web_server",
+    client_id: process.env.BASECAMP_CLIENT_ID ?? "",
+    redirect_uri: `${process.env.APP_URL}/api/auth/basecamp`,
+  }).toString();
+
 const GOOGLE_AUTH_URL =
   "https://accounts.google.com/o/oauth2/v2/auth?" +
   new URLSearchParams({
@@ -23,15 +31,20 @@ async function getGoogleStatus() {
   return !!token?.value;
 }
 
+async function getBasecampStatus() {
+  const token = await db.setting.findUnique({
+    where: { key: "basecamp_refresh_token" },
+  });
+  return !!token?.value;
+}
+
 export default async function SetupPage({
   searchParams,
 }: {
   searchParams: Promise<{ connected?: string; error?: string }>;
 }) {
-  const [googleConnected, { connected, error }] = await Promise.all([
-    getGoogleStatus(),
-    searchParams,
-  ]);
+  const [googleConnected, basecampConnected, { connected, error }] =
+    await Promise.all([getGoogleStatus(), getBasecampStatus(), searchParams]);
 
   return (
     <div className="flex justify-center w-full h-full">
@@ -47,11 +60,42 @@ export default async function SetupPage({
             Google account connected successfully.
           </div>
         )}
+        {connected === "basecamp" && (
+          <div role="alert" className="alert alert-success">
+            Basecamp account connected successfully.
+          </div>
+        )}
         {error && (
           <div role="alert" className="alert alert-error">
             Error: {error.replace(/_/g, " ")}
           </div>
         )}
+
+        {/* Basecamp */}
+        <div className="card bg-base-100 border border-base-300">
+          <div className="card-body gap-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="card-title">Basecamp</h2>
+                <p className="text-sm text-base-content/60">
+                  Allows creating cards and todos via the Basecamp API.
+                </p>
+              </div>
+              {basecampConnected ? (
+                <span className="badge badge-success badge-lg">Connected</span>
+              ) : (
+                <span className="badge badge-ghost badge-lg">
+                  Not connected
+                </span>
+              )}
+            </div>
+            <div className="card-actions">
+              <a href={BASECAMP_AUTH_URL} className="btn btn-primary btn-sm">
+                {basecampConnected ? "Reconnect Basecamp" : "Connect Basecamp"}
+              </a>
+            </div>
+          </div>
+        </div>
 
         {/* Google */}
         <div className="card bg-base-100 border border-base-300">

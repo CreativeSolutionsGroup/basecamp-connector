@@ -1,11 +1,13 @@
 import ConnectionCard from "@/components/ConnectionCard";
 import AddConnectionButton from "@/components/AddConnectionButton";
+import SearchParamToast from "@/components/SearchParamToast";
 import { readData } from "@/lib/actions/read";
 import { db } from "@/lib/db";
 import { parseFormFields } from "@/lib/utils/google";
 import { buildBasecampUrl } from "@/lib/utils/basecamp";
 import { IconChevronLeft } from "@tabler/icons-react";
 import Link from "next/link";
+import { Suspense } from "react";
 
 export default async function FormPage({
   params,
@@ -26,6 +28,9 @@ export default async function FormPage({
 
   return (
     <div className="flex justify-center w-full">
+      <Suspense>
+        <SearchParamToast param="updated" message="Form updated successfully." />
+      </Suspense>
       <main className="w-2xl mt-4 mb-8">
         <div className="flex items-center gap-2">
           <Link href="/" className="btn btn-ghost btn-square">

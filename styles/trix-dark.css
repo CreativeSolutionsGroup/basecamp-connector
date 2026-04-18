@@ -44,6 +44,37 @@ trix-editor em {
   font-style: italic;
 }
 
+/* ── Field chips ── */
+trix-editor figure.attachment--content {
+  display: inline-block;
+  margin: 0;
+  padding: 0;
+}
+
+trix-editor figure.attachment--content .attachment__caption {
+  display: none;
+}
+
+trix-editor .field-chip {
+  display: inline-block;
+  padding: 0 0.45em;
+  font-size: 0.75em;
+  font-weight: 600;
+  line-height: 1.6;
+  border-radius: 9999px;
+  border: 1px solid currentColor;
+  color: oklch(0.25 0.08 250);
+  background: oklch(0.92 0.04 250 / 0.15);
+  vertical-align: middle;
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+}
+
+trix-editor .field-chip__id {
+  display: none;
+}
+
 @media (prefers-color-scheme: dark) {
   /* Toolbar chrome */
   trix-toolbar .trix-button-group {
@@ -127,5 +158,17 @@ trix-editor em {
   }
   trix-toolbar .trix-button--icon-increase-nesting-level::before {
     background-image: url("data:image/svg+xml,%3Csvg%20width%3D%2224%22%20height%3D%2224%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20fill-rule%3D%22evenodd%22%20clip-rule%3D%22evenodd%22%20d%3D%22M5%206a1%201%200%200%201%201-1h12a1%201%200%201%201%200%202H6a1%201%200%200%201-1-1Zm4%205a1%201%200%201%200%200%202h9a1%201%200%201%200%200-2H9Zm-3%206a1%201%200%201%200%200%202h12a1%201%200%201%200%200-2H6Zm-2.293-2.293%202-2a1%201%200%200%200%200-1.414l-2-2a1%201%200%201%200-1.414%201.414L3.586%2012l-1.293%201.293a1%201%200%201%200%201.414%201.414Z%22%20fill%3D%22%23fff%22%2F%3E%3C%2Fsvg%3E");
+  }
+
+  /* Field chips in dark mode */
+  trix-editor figure.attachment--content {
+    background: none;
+    border: none;
+    box-shadow: none;
+  }
+  trix-editor .field-chip {
+    color: oklch(0.85 0.06 250);
+    background: oklch(0.3 0.08 250 / 0.25);
+    border-color: oklch(0.6 0.08 250);
   }
 }

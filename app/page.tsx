@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { IconChevronRight, IconPlus, IconSettings } from "@tabler/icons-react";
+import { IconPlus, IconSettings } from "@tabler/icons-react";
 import Link from "next/link";
 
 export default async function Home() {
@@ -11,10 +11,7 @@ export default async function Home() {
     <div className="flex justify-center w-full h-full">
       <main className="w-2xl mt-4">
         <div className="flex items-center">
-          <h1 className="text-2xl font-bold mr-auto">
-            Forms <IconChevronRight className="w-5 h-5 inline-block mx-1" />{" "}
-            Basecamp
-          </h1>
+          <h1 className="text-2xl font-bold mr-auto">Forms to Basecamp</h1>
           <Link href="/new-form" className="btn btn-primary mr-2">
             <IconPlus className="w-5 h-5 inline-block mr-1" /> New Form
           </Link>

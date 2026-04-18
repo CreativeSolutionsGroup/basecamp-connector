@@ -2,9 +2,10 @@
 
 import { useTransition, useState } from "react";
 import { ParsedFormField } from "@/lib/utils/google";
-import { updateConnection, deleteConnection } from "@/lib/actions/connection";
+import { updateConnection, deleteConnection, testConnection } from "@/lib/actions/connection";
 import { useToast } from "./ToastProvider";
 import FormEditor from "./FormEditor";
+import { IconPlugConnected } from "@tabler/icons-react";
 
 interface ConnectionData {
   id: string;
@@ -25,6 +26,7 @@ export default function ConnectionCard({
   const toast = useToast();
   const [savePending, startSave] = useTransition();
   const [deletePending, startDelete] = useTransition();
+  const [testPending, startTest] = useTransition();
 
   const [routingQuestionId, setRoutingQuestionId] = useState(
     connection.routingQuestionId ?? ""
@@ -51,6 +53,17 @@ export default function ConnectionCard({
     startDelete(async () => {
       const result = await deleteConnection(connection.id);
       if (!result.success) toast({ type: "error", message: result.error });
+    });
+  };
+
+  const handleTest = () => {
+    startTest(async () => {
+      const result = await testConnection(connection.id);
+      if (result.success) {
+        toast({ type: "success", message: `Connected: "${result.name}"` });
+      } else {
+        toast({ type: "error", message: result.error });
+      }
     });
   };
 
@@ -164,13 +177,30 @@ export default function ConnectionCard({
           >
             {deletePending ? "Deleting…" : "Delete"}
           </button>
-          <button
-            type="submit"
-            disabled={savePending}
-            className="btn btn-primary btn-sm"
-          >
-            {savePending ? "Saving…" : "Save"}
-          </button>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={handleTest}
+              disabled={testPending || !connection.basecampUrl}
+              className="btn btn-outline btn-sm"
+            >
+              {testPending ? (
+                "Testing…"
+              ) : (
+                <>
+                  <IconPlugConnected className="w-4 h-4" />
+                  Test
+                </>
+              )}
+            </button>
+            <button
+              type="submit"
+              disabled={savePending}
+              className="btn btn-primary btn-sm"
+            >
+              {savePending ? "Saving…" : "Save"}
+            </button>
+          </div>
         </div>
       </form>
     </div>

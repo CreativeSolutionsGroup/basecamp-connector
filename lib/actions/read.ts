@@ -31,5 +31,5 @@ export async function readData(formData: FormData) {
     },
   });
 
-  redirect(`/form/${dbForm.id}`);
+  redirect(`/form/${dbForm.id}?updated=true`);
 }

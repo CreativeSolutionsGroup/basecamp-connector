@@ -163,11 +163,13 @@ Stores org-wide default project/column IDs in `settings`. These pre-populate the
   "formId": "1BxiM...",
   "submittedAt": "2025-01-01T12:00:00Z",
   "answers": [
-    { "question": "Full Name", "answer": "Jane Doe" },
-    { "question": "Project Description", "answer": "Lorem ipsum..." }
+    { "questionId": "abc123", "answer": "Jane Doe" },
+    { "questionId": "def456", "answer": "Lorem ipsum..." }
   ]
 }
 ```
+
+Answers are keyed by `questionId` (not title) to correctly handle branching forms where multiple fields can share the same display name.
 
 **Action:** Insert into `submissions` with `status = 'pending'`.
 
@@ -233,12 +235,16 @@ https://launchpad.37signals.com/authorization/new
 
 Merges raw form answers with the ordered field schema into Trix-compatible HTML. Questions are rendered in **schema order** (Google Forms API field order), not submission order.
 
+Placeholders use **question IDs** (not titles) to correctly handle branching forms where multiple fields may share the same display name. The `ParsedFormField` type carries both `questionId` and `title`; the template engine uses `questionId` as the key and `title` only for display.
+
 ```ts
 function buildTrixHtml(
-  answers: { question: string; answer: string }[],
-  schema: { title: string; type: string }[]
+  answers: { questionId: string; answer: string }[],
+  schema: { questionId: string; title: string; type: string }[]
 ): string
 ```
+
+Placeholder format in templates: `{{questionId}}`
 
 Example output:
 ```html

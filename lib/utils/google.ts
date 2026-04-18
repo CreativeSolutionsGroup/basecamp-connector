@@ -3,6 +3,7 @@ export interface ParsedFormField {
   title: string;
   type: "text" | "choice" | "date" | "time";
   options?: string[];
+  sectionTitle?: string;
 }
 
 function getFieldTypeInfo(
@@ -19,18 +20,23 @@ function getFieldTypeInfo(
 
 export function parseFormFields(raw: unknown): ParsedFormField[] {
   if (!Array.isArray(raw)) return [];
-  return raw
-    .filter(
-      (item) =>
-        typeof item === "object" &&
-        item !== null &&
-        item.questionItem?.question?.questionId
-    )
-    .map((item) => ({
+  const fields: ParsedFormField[] = [];
+  let currentSection: string | undefined = undefined;
+  for (const item of raw) {
+    if (typeof item !== "object" || item === null) continue;
+    if (item.pageBreakItem !== undefined) {
+      currentSection = (item.title as string) || undefined;
+      continue;
+    }
+    if (!item.questionItem?.question?.questionId) continue;
+    fields.push({
       questionId: item.questionItem.question.questionId,
       title: item.title as string,
       ...getFieldTypeInfo(item.questionItem.question),
-    }));
+      sectionTitle: currentSection,
+    });
+  }
+  return fields;
 }
 
 export function getFormIDFromURL(url: string): string | null {

@@ -16,17 +16,30 @@ interface TrixEditorProps extends Omit<
 
 export interface TrixEditorHandle {
   insertText: (text: string) => void;
+  insertPlaceholder: (questionId: string, title: string) => void;
 }
 
 const TrixEditor = forwardRef<TrixEditorHandle, TrixEditorProps>(function TrixEditor(
   { defaultValue = "", name, inputId = "trix-input", onChange, ...props },
   ref
 ) {
-  const editorRef = useRef<HTMLElement & { value: string; editor: { insertString: (s: string) => void; loadHTML: (html: string) => void } } & EventTarget>(null);
+  const editorRef = useRef<HTMLElement & { value: string; editor: { insertString: (s: string) => void; loadHTML: (html: string) => void; recordUndoEntry: (description: string) => void; insertAttachment: (attachment: TrixAttachment) => void } } & EventTarget>(null);
 
   useImperativeHandle(ref, () => ({
     insertText: (text: string) => {
+      editorRef.current?.editor?.recordUndoEntry("Insert placeholder");
       editorRef.current?.editor?.insertString(text);
+    },
+    insertPlaceholder: (questionId: string, title: string) => {
+      const TrixAttachmentClass = window.Trix?.Attachment;
+      if (!TrixAttachmentClass || !editorRef.current?.editor) return;
+      const content =
+        `<span class="field-chip" data-field-title="${escapeAttr(title)}">${escapeHtml(title)}</span>` +
+        `<span class="field-chip__id">{{${questionId}}}</span>`;
+      editorRef.current.editor.recordUndoEntry("Insert field");
+      editorRef.current.editor.insertAttachment(
+        new TrixAttachmentClass({ content, contentType: "application/vnd.field-chip" })
+      );
     },
   }));
 
@@ -91,3 +104,11 @@ const TrixEditor = forwardRef<TrixEditorHandle, TrixEditorProps>(function TrixEd
 });
 
 export default TrixEditor;
+
+function escapeHtml(s: string) {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function escapeAttr(s: string) {
+  return escapeHtml(s).replace(/"/g, "&quot;");
+}

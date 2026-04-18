@@ -3,8 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { db } from "../db";
 import { getIdsFromBasecampURL } from "../utils/basecamp";
+import { testBasecampDestination } from "../basecamp";
 
 type ActionResult = { success: true } | { success: false; error: string };
+type TestResult = { success: true; name: string } | { success: false; error: string };
 
 export async function createConnection(formId: string): Promise<ActionResult> {
   try {
@@ -57,6 +59,32 @@ export async function updateConnection(
     return { success: true };
   } catch {
     return { success: false, error: "Failed to save connection" };
+  }
+}
+
+export async function testConnection(connectionId: string): Promise<TestResult> {
+  const connection = await db.connection.findUnique({
+    where: { id: connectionId },
+  });
+  if (!connection) return { success: false, error: "Connection not found" };
+  if (!connection.basecampProjectId || !connection.basecampSubItemId) {
+    return {
+      success: false,
+      error: "Connection has no Basecamp URL saved. Save the connection first.",
+    };
+  }
+  try {
+    const result = await testBasecampDestination(
+      connection.type,
+      connection.basecampProjectId,
+      connection.basecampSubItemId,
+    );
+    return { success: true, name: result.name };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Test failed",
+    };
   }
 }
 

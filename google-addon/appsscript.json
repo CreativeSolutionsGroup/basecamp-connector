@@ -3,11 +3,12 @@
   "addOns": {
     "common": {
       "name": "Basecamp Form Sync",
-      "logoUrl": "https://your-logo-url.png"
+      "logoUrl": "https://your-logo-url.png",
+      "homepageTrigger": {
+        "runFunction": "onFormOpen"
+      }
     },
-    "forms": {
-      "onFormOpenTrigger": { "runFunction": "onFormOpen" }
-    }
+    "forms": {}
   },
   "oauthScopes": [
     "https://www.googleapis.com/auth/forms.currentonly",
