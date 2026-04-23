@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { applyTemplate } from "@/lib/template";
+import { applyTemplate, applyPlainTemplate } from "@/lib/template";
 import { createBasecampCard, createBasecampTodo } from "@/lib/basecamp";
 
 interface WebhookAnswer {
   questionId: string;
-  answer: string;
+  answer: string | string[];
 }
 
 interface WebhookBody {
@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
   // Build a flat answers map for template substitution
   const answersMap: Record<string, string> = {};
   for (const { questionId, answer } of answers) {
-    answersMap[questionId] = answer;
+    answersMap[questionId] = Array.isArray(answer) ? answer.join(", ") : String(answer);
   }
 
   const results: { connectionId: string; status: "sent" | "error"; error?: string }[] = [];
@@ -69,7 +69,9 @@ export async function POST(req: NextRequest) {
     }
 
     const content = applyTemplate(connection.content, answersMap);
-    const title = form.title;
+    const title = connection.title
+      ? applyPlainTemplate(connection.title, answersMap)
+      : form.title;
 
     try {
       if (connection.type === "BASECAMP_CARD") {

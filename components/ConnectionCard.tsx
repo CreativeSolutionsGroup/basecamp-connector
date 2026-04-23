@@ -5,11 +5,13 @@ import { ParsedFormField } from "@/lib/utils/google";
 import { updateConnection, deleteConnection, testConnection } from "@/lib/actions/connection";
 import { useToast } from "./ToastProvider";
 import FormEditor from "./FormEditor";
+import TitleEditor from "./TitleEditor";
 import { IconPlugConnected } from "@tabler/icons-react";
 
 interface ConnectionData {
   id: string;
   type: "BASECAMP_CARD" | "BASECAMP_TODO";
+  title: string;
   content: string;
   routingQuestionId: string | null;
   routingValue: string | null;
@@ -155,6 +157,16 @@ export default function ConnectionCard({
             />
           </div>
         </div>
+
+        {/* Title editor */}
+        <label className="label mt-4">
+          <span className="label-text">Title</span>
+        </label>
+        <TitleEditor
+          formFields={formFields}
+          defaultValue={connection.title}
+          name="title"
+        />
 
         {/* Template editor */}
         <label className="label mt-4">

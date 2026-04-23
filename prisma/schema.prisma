@@ -42,6 +42,7 @@ model Response {
 model Connection {
   id      String         @id @default(cuid())
   type    ConnectionType @map("type")
+  title   String         @default("") @map("title")
   content String         @map("content")
 
   basecampProjectId String @map("basecamp_project_id")

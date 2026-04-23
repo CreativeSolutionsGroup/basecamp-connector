@@ -33,6 +33,7 @@ export async function updateConnection(
   const basecampUrl = formData.get("basecampUrl") as string;
   const type =
     formData.get("itemType") === "card" ? "BASECAMP_CARD" : "BASECAMP_TODO";
+  const title = (formData.get("title") as string) ?? "";
   const content = (formData.get("content") as string) ?? "";
   const routingQuestionId =
     (formData.get("routingQuestionId") as string) || null;
@@ -50,6 +51,7 @@ export async function updateConnection(
         type,
         basecampProjectId: ids.projectId,
         basecampSubItemId: ids.subItemId,
+        title,
         content,
         routingQuestionId,
         routingValue,

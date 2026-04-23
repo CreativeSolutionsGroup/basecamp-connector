@@ -38,8 +38,18 @@ export function applyTemplate(
   return result;
 }
 
+export function applyPlainTemplate(
+  text: string,
+  answers: Record<string, string>
+): string {
+  return text.replace(/\{\{([^}]+)\}\}/g, (match, questionId) => {
+    const answer = answers[questionId];
+    return answer !== undefined ? answer : match;
+  });
+}
+
 function escapeHtml(s: string) {
-  return s
+  return String(s)
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")

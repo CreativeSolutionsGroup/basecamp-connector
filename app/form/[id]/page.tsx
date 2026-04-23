@@ -78,6 +78,7 @@ export default async function FormPage({
             connection={{
               id: c.id,
               type: c.type,
+              title: c.title,
               content: c.content,
               routingQuestionId: c.routingQuestionId,
               routingValue: c.routingValue,
