@@ -82,6 +82,7 @@ export default async function FormPage({
               content: c.content,
               routingQuestionId: c.routingQuestionId,
               routingValue: c.routingValue,
+              exclusive: c.exclusive,
               basecampUrl:
                 c.basecampProjectId && c.basecampSubItemId
                   ? buildBasecampUrl(

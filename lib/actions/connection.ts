@@ -40,6 +40,7 @@ export async function updateConnection(
   const routingValue = routingQuestionId
     ? (formData.get("routingValue") as string) || null
     : null;
+  const exclusive = formData.get("exclusive") === "on";
 
   const ids = getIdsFromBasecampURL(basecampUrl);
   if (!ids) return { success: false, error: "Invalid Basecamp URL" };
@@ -55,6 +56,7 @@ export async function updateConnection(
         content,
         routingQuestionId,
         routingValue,
+        exclusive,
       },
     });
     revalidatePath(`/form/${connection.formId}`);

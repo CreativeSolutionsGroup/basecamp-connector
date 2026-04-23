@@ -15,6 +15,7 @@ interface ConnectionData {
   content: string;
   routingQuestionId: string | null;
   routingValue: string | null;
+  exclusive: boolean;
   basecampUrl: string;
 }
 
@@ -36,6 +37,7 @@ export default function ConnectionCard({
   const [routingValue, setRoutingValue] = useState(
     connection.routingValue ?? ""
   );
+  const [exclusive, setExclusive] = useState(connection.exclusive);
 
   const selectedField = formFields.find(
     (f) => f.questionId === routingQuestionId
@@ -127,6 +129,20 @@ export default function ConnectionCard({
             </div>
           )}
         </div>
+
+          <div className="flex items-center gap-2 mt-3">
+            <input
+              type="checkbox"
+              id={`exclusive-${connection.id}`}
+              name="exclusive"
+              className="checkbox checkbox-sm"
+              checked={exclusive}
+              onChange={(e) => setExclusive(e.target.checked)}
+            />
+            <label htmlFor={`exclusive-${connection.id}`} className="label-text cursor-pointer">
+              Exclusive — suppress default connections when this one fires
+            </label>
+          </div>
 
         {/* Basecamp target */}
         <div className="flex flex-wrap items-end gap-3 mt-4">

@@ -59,15 +59,19 @@ export async function POST(req: NextRequest) {
 
   const results: { connectionId: string; status: "sent" | "error"; error?: string }[] = [];
 
-  for (const connection of form.connections) {
-    // Apply routing rule if present
-    if (connection.routingQuestionId) {
-      const actual = answersMap[connection.routingQuestionId];
-      if (actual !== connection.routingValue) {
-        continue;
-      }
-    }
+  // Find connections whose routing rules match this submission
+  const matching = form.connections.filter((c) => {
+    if (!c.routingQuestionId) return true;
+    return answersMap[c.routingQuestionId] === c.routingValue;
+  });
 
+  // If any exclusive connection matched, suppress non-routed default connections
+  const exclusiveFired = matching.some((c) => c.exclusive);
+  const toProcess = exclusiveFired
+    ? matching.filter((c) => c.routingQuestionId || c.exclusive)
+    : matching;
+
+  for (const connection of toProcess) {
     const content = applyTemplate(connection.content, answersMap);
     const title = connection.title
       ? applyPlainTemplate(connection.title, answersMap)

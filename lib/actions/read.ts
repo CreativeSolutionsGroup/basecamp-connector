@@ -1,6 +1,7 @@
 "use server";
 
 import { Prisma } from "@prisma/client";
+import { revalidatePath } from "next/cache";
 import { db } from "../db";
 import { getItemsFromGoogleForm } from "../google";
 import { getFormIDFromURL } from "../utils/google";
@@ -31,5 +32,6 @@ export async function readData(formData: FormData) {
     },
   });
 
+  revalidatePath("/");
   redirect(`/form/${dbForm.id}?updated=true`);
 }

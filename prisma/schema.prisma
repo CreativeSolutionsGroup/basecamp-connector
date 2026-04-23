@@ -50,6 +50,7 @@ model Connection {
 
   routingQuestionId String? @map("routing_question_id")
   routingValue      String? @map("routing_value")
+  exclusive         Boolean @default(false) @map("exclusive")
 
   formId String @map("form_id")
   form   Form   @relation(fields: [formId], references: [id])
