@@ -1,48 +1,17 @@
-const WEBHOOK_URL = "https://your-app.vercel.app/api/webhooks/google-forms";
-const WEBHOOK_SECRET = "your-shared-secret";
+const WEBHOOK_URL = "";
+const WEBHOOK_SECRET = "";
 
-function onFormOpen() {
-  const isEnabled = ScriptApp.getProjectTriggers()
-    .some(t => t.getHandlerFunction() === "onFormSubmit");
+function onOpen(e) {
+  FormApp.getUi()
+    .createAddonMenu()
+    .addItem("Enable Sync", "installTrigger")
+    .addItem("Disable Sync", "removeTrigger")
+    .addItem("Send Test Webhook", "sendTestWebhook")
+    .addToUi();
+}
 
-  const lastResult = PropertiesService.getScriptProperties().getProperty("lastWebhookResult");
-
-  const section = CardService.newCardSection()
-    .addWidget(
-      CardService.newTextParagraph().setText(
-        isEnabled
-          ? "✅ Sync is enabled for this form."
-          : "⚠️ Sync is not enabled for this form."
-      )
-    );
-
-  if (lastResult) {
-    section.addWidget(
-      CardService.newTextParagraph().setText("Last webhook: " + lastResult)
-    );
-  }
-
-  section
-    .addWidget(
-      CardService.newTextButton()
-        .setText("Enable sync")
-        .setOnClickAction(CardService.newAction().setFunctionName("installTrigger"))
-    )
-    .addWidget(
-      CardService.newTextButton()
-        .setText("Disable sync")
-        .setOnClickAction(CardService.newAction().setFunctionName("removeTrigger"))
-    )
-    .addWidget(
-      CardService.newTextButton()
-        .setText("Send Test Webhook")
-        .setOnClickAction(CardService.newAction().setFunctionName("sendTestWebhook"))
-    );
-
-  return CardService.newCardBuilder()
-    .setHeader(CardService.newCardHeader().setTitle("Basecamp Form Sync"))
-    .addSection(section)
-    .build();
+function onInstall(e) {
+  onOpen(e);
 }
 
 function installTrigger() {
@@ -51,20 +20,14 @@ function installTrigger() {
     .forForm(FormApp.getActiveForm())
     .onFormSubmit()
     .create();
-  return CardService.newActionResponseBuilder()
-    .setNotification(CardService.newNotification().setText("Basecamp sync enabled."))
-    .setStateChanged(true)
-    .build();
+  FormApp.getUi().alert("Basecamp sync enabled.");
 }
 
 function removeTrigger() {
   ScriptApp.getProjectTriggers().forEach(t => {
     if (t.getHandlerFunction() === "onFormSubmit") ScriptApp.deleteTrigger(t);
   });
-  return CardService.newActionResponseBuilder()
-    .setNotification(CardService.newNotification().setText("Basecamp sync disabled."))
-    .setStateChanged(true)
-    .build();
+  FormApp.getUi().alert("Basecamp sync disabled.");
 }
 
 function onFormSubmit(e) {
@@ -74,7 +37,7 @@ function onFormSubmit(e) {
       formId: e.source.getId(),
       submittedAt: e.response.getTimestamp(),
       answers: e.response.getItemResponses().map(r => ({
-        questionId: r.getItem().getId().toString(16),
+        questionId: r.getItem().getId().toString(16).padStart(8, "0"),
         title: r.getItem().getTitle(),
         answer: r.getResponse()
       }))
@@ -103,7 +66,7 @@ function onFormSubmit(e) {
     PropertiesService.getScriptProperties().setProperty(
       "lastWebhookResult", "ERROR: " + err.message.substring(0, 150)
     );
-    throw err; // re-throw so it appears in the execution log
+    throw err;
   }
 }
 
@@ -112,17 +75,15 @@ function sendTestWebhook() {
     const form = FormApp.getActiveForm();
     const items = form.getItems();
 
-    const answers = items.map(item => ({
-      questionId: item.getId().toString(16),
-      title: item.getTitle(),
-      answer: "Test"
-    }));
-
     const payload = {
       responseId: "test-" + Date.now(),
       formId: form.getId(),
       submittedAt: new Date().toISOString(),
-      answers: answers,
+      answers: items.map(item => ({
+        questionId: item.getId().toString(16).padStart(8, "0"),
+        title: item.getTitle(),
+        answer: "Test"
+      })),
       isTest: true
     };
 
@@ -138,27 +99,18 @@ function sendTestWebhook() {
 
     const code = response.getResponseCode();
     const body = response.getContentText().substring(0, 150);
-    const resultText = "HTTP " + code + ": " + body;
-
-    Logger.log("Test webhook response: " + resultText);
-    PropertiesService.getScriptProperties().setProperty("lastWebhookResult", resultText);
+    PropertiesService.getScriptProperties().setProperty("lastWebhookResult", "HTTP " + code + ": " + body);
 
     const msg = (code >= 200 && code < 300)
-      ? "Test sent! " + code + " — " + body
-      : "Test failed: " + resultText;
+      ? "Test sent successfully! HTTP " + code + " — " + body
+      : "Test failed: HTTP " + code + " — " + body;
 
-    return CardService.newActionResponseBuilder()
-      .setNotification(CardService.newNotification().setText(msg))
-      .setStateChanged(true)
-      .build();
+    FormApp.getUi().alert(msg);
   } catch (err) {
     Logger.log("sendTestWebhook ERROR: " + err.message);
     PropertiesService.getScriptProperties().setProperty(
       "lastWebhookResult", "ERROR: " + err.message.substring(0, 150)
     );
-    return CardService.newActionResponseBuilder()
-      .setNotification(CardService.newNotification().setText("Error: " + err.message))
-      .setStateChanged(true)
-      .build();
+    FormApp.getUi().alert("Error: " + err.message);
   }
 }
