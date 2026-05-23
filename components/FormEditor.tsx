@@ -9,11 +9,13 @@ export default function FormEditor({
   defaultValue,
   name,
   inputId,
+  onChange,
 }: {
   formFields: ParsedFormField[];
   defaultValue?: string;
   name?: string;
   inputId?: string;
+  onChange?: (html: string) => void;
 }) {
   const editorRef = useRef<TrixEditorHandle>(null);
 
@@ -32,7 +34,7 @@ export default function FormEditor({
 
   return (
     <>
-      <TrixEditor ref={editorRef} className="mt-2" defaultValue={defaultValue} name={name} inputId={inputId} />
+      <TrixEditor ref={editorRef} className="mt-2" defaultValue={defaultValue} name={name} inputId={inputId} onChange={onChange} />
       {formFields.length > 0 && (
         <div className="mt-3 max-h-40 overflow-auto space-y-2">
           {sections.map((section, i) => (

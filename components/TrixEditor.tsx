@@ -81,13 +81,16 @@ const TrixEditor = forwardRef<TrixEditorHandle, TrixEditorProps>(
     }, []);
 
     const defaultValueRef = useRef(defaultValue);
+    const suppressChangeRef = useRef(false);
 
     useEffect(() => {
       const editor = editorRef.current;
       if (!editor) return;
 
       const handleChange = () => {
-        onChange?.(editor.value);
+        if (!suppressChangeRef.current) {
+          onChange?.(editor.value);
+        }
       };
 
       const removeAttachButton = () => {
@@ -99,7 +102,10 @@ const TrixEditor = forwardRef<TrixEditorHandle, TrixEditorProps>(
 
       const loadInitialValue = () => {
         if (defaultValueRef.current) {
+          suppressChangeRef.current = true;
           editor.editor?.loadHTML(defaultValueRef.current);
+          // trix-change may fire sync or async during loadHTML — reset after microtasks
+          Promise.resolve().then(() => { suppressChangeRef.current = false; });
         }
       };
 
@@ -131,7 +137,7 @@ const TrixEditor = forwardRef<TrixEditorHandle, TrixEditorProps>(
           defaultValue={defaultValue}
         />
         {/* @ts-expect-error trix custom element */}
-        <trix-editor input={inputId} ref={editorRef} className="h-60" />
+        <trix-editor input={inputId} ref={editorRef} className="h-60 overflow-y-auto" />
       </div>
     );
   },

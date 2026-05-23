@@ -1,9 +1,10 @@
 "use client";
 
-import { useTransition, useState } from "react";
+import { useTransition, useState, useRef, useEffect, useCallback } from "react";
 import { ParsedFormField } from "@/lib/utils/google";
 import { updateConnection, deleteConnection, testConnection } from "@/lib/actions/connection";
 import { useToast } from "./ToastProvider";
+import { useConnections } from "./ConnectionsContext";
 import FormEditor from "./FormEditor";
 import TitleEditor from "./TitleEditor";
 import { IconPlugConnected } from "@tabler/icons-react";
@@ -27,9 +28,13 @@ export default function ConnectionCard({
   formFields: ParsedFormField[];
 }) {
   const toast = useToast();
+  const { markDirty, markClean, registerSaver, unregisterSaver } = useConnections();
   const [savePending, startSave] = useTransition();
   const [deletePending, startDelete] = useTransition();
   const [testPending, startTest] = useTransition();
+
+  const formRef = useRef<HTMLFormElement>(null);
+  const mountedRef = useRef(false);
 
   const [routingQuestionId, setRoutingQuestionId] = useState(
     connection.routingQuestionId ?? ""
@@ -43,14 +48,36 @@ export default function ConnectionCard({
     (f) => f.questionId === routingQuestionId
   );
 
+  const handleAnyChange = useCallback(() => {
+    if (mountedRef.current) markDirty(connection.id);
+  }, [connection.id, markDirty]);
+
+  const executeSave = useCallback(async () => {
+    const form = formRef.current;
+    if (!form) return;
+    const formData = new FormData(form);
+    const result = await updateConnection(connection.id, formData);
+    if (result.success) {
+      toast({ type: "success", message: "Connection saved!" });
+      markClean(connection.id);
+    } else {
+      toast({ type: "error", message: result.error });
+      throw new Error(result.error);
+    }
+  }, [connection.id, markClean, toast]);
+
+  useEffect(() => {
+    mountedRef.current = true;
+  }, []);
+
+  useEffect(() => {
+    registerSaver(connection.id, executeSave);
+    return () => unregisterSaver(connection.id);
+  }, [connection.id, executeSave, registerSaver, unregisterSaver]);
+
   const handleSave = (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    startSave(async () => {
-      const result = await updateConnection(connection.id, formData);
-      if (result.success) toast({ type: "success", message: "Connection saved!" });
-      else toast({ type: "error", message: result.error });
-    });
+    startSave(executeSave);
   };
 
   const handleDelete = () => {
@@ -73,7 +100,7 @@ export default function ConnectionCard({
 
   return (
     <div className="card bg-base-200 mt-4">
-      <form onSubmit={handleSave} className="card-body gap-0 p-4">
+      <form ref={formRef} onSubmit={handleSave} onChange={handleAnyChange} className="card-body gap-0 p-4">
         {/* Routing */}
         <div className="flex flex-wrap items-end gap-3">
           <div className="flex flex-col flex-1 min-w-40">
@@ -182,6 +209,7 @@ export default function ConnectionCard({
           formFields={formFields}
           defaultValue={connection.title}
           name="title"
+          onChange={handleAnyChange}
         />
 
         {/* Template editor */}
@@ -193,6 +221,7 @@ export default function ConnectionCard({
           defaultValue={connection.content}
           name="content"
           inputId={`trix-input-${connection.id}`}
+          onChange={handleAnyChange}
         />
 
         {/* Actions */}

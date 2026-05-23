@@ -39,6 +39,30 @@ export function parseFormFields(raw: unknown): ParsedFormField[] {
   return fields;
 }
 
+/**
+ * Builds a mapping from the Google Forms Responses API's questionId
+ * to the itemId used by our system (and by the Apps Script webhook).
+ *
+ * The Responses API keys answers by question.questionId, but templates
+ * and the DB use item.itemId (the same hex value Apps Script sends).
+ */
+export function buildQuestionIdToItemIdMap(rawItems: unknown): Map<string, string> {
+  const map = new Map<string, string>();
+  if (!Array.isArray(rawItems)) return map;
+  for (const item of rawItems) {
+    if (typeof item !== "object" || item === null) continue;
+    const i = item as Record<string, unknown>;
+    const itemId = i.itemId as string | undefined;
+    const question = (
+      i.questionItem as { question?: { questionId?: string } } | undefined
+    )?.question;
+    if (itemId && question?.questionId) {
+      map.set(question.questionId, itemId);
+    }
+  }
+  return map;
+}
+
 export function getFormIDFromURL(url: string): string | null {
   try {
     const parsed = new URL(url);

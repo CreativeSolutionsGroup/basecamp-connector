@@ -75,10 +75,91 @@ export async function getItemsFromGoogleForm(formId: string): Promise<Form> {
   );
 
   if (!res.ok) {
+    if (res.status === 403) {
+      throw new Error(
+        "The bot account doesn't have access to this form. Share the form with the bot account and try again.",
+      );
+    }
+    if (res.status === 404) {
+      throw new Error(
+        "Form not found. Check that the URL is correct and the form hasn't been deleted.",
+      );
+    }
     const text = await res.text();
     throw new Error(`Failed to fetch form data from Google: ${text}`);
   }
 
   const data = (await res.json()) as Form;
   return data;
+}
+
+export interface GoogleFormAnswer {
+  questionId: string;
+  textAnswers?: { answers: { value: string }[] };
+  choiceAnswers?: { answers: { value: string }[] };
+}
+
+export interface GoogleFormResponse {
+  responseId: string;
+  createTime: string;
+  answers?: Record<string, GoogleFormAnswer>;
+}
+
+/**
+ * Fetches all responses for a Google Form.
+ * Returns an empty array if no responses exist (the API omits the key entirely).
+ * TODO: handle nextPageToken for forms with >5000 responses.
+ */
+export async function getGoogleFormResponses(
+  formId: string,
+): Promise<GoogleFormResponse[]> {
+  const accessToken = await getGoogleAccessToken();
+  const res = await fetch(
+    `https://forms.googleapis.com/v1/forms/${formId}/responses`,
+    { headers: { Authorization: `Bearer ${accessToken}` } },
+  );
+
+  if (!res.ok) {
+    if (res.status === 403) {
+      throw new Error(
+        "The bot account doesn't have access to this form's responses. Share the form with the bot account and try again.",
+      );
+    }
+    if (res.status === 404) {
+      throw new Error(
+        "Form not found. Check that the URL is correct and the form hasn't been deleted.",
+      );
+    }
+    const text = await res.text();
+    throw new Error(`Failed to fetch form responses from Google: ${text}`);
+  }
+
+  const data = (await res.json()) as { responses?: GoogleFormResponse[] };
+  return data.responses ?? [];
+}
+
+/**
+ * Flattens the Google Forms Responses API answer map into a plain
+ * Record<itemId, string>, joining multi-value answers with ", ".
+ *
+ * The Responses API keys answers by question.questionId, which differs
+ * from the item.itemId used by templates and the Apps Script webhook.
+ * Pass keyMap (built with buildQuestionIdToItemIdMap) to remap keys to
+ * item IDs so that template substitution works correctly.
+ */
+export function parseGoogleAnswers(
+  answers: Record<string, GoogleFormAnswer> | undefined,
+  keyMap?: Map<string, string>,
+): Record<string, string> {
+  const map: Record<string, string> = {};
+  if (!answers) return map;
+  for (const [questionId, answer] of Object.entries(answers)) {
+    const values =
+      answer.textAnswers?.answers.map((a) => a.value) ??
+      answer.choiceAnswers?.answers.map((a) => a.value) ??
+      [];
+    const key = keyMap?.get(questionId) ?? questionId;
+    map[key] = values.join(", ");
+  }
+  return map;
 }

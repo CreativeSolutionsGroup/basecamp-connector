@@ -1,5 +1,10 @@
+import DeleteFormButton from "@/components/DeleteFormButton";
 import { db } from "@/lib/db";
-import { IconPlus, IconSettings } from "@tabler/icons-react";
+import {
+  IconEdit,
+  IconPlus,
+  IconSettings
+} from "@tabler/icons-react";
 import Link from "next/link";
 
 export default async function Home() {
@@ -25,19 +30,24 @@ export default async function Home() {
           ) : (
             <div className="mt-6 flex flex-col gap-4">
               {forms.map((form) => (
-                <Link
-                  key={form.id}
-                  href={`/form/${form.id}`}
-                  className="card bg-base-100 border border-base-300 hover:bg-base-200 transition-colors"
-                >
-                  <div className="card-body">
-                    <h2 className="card-title">{form.title}</h2>
-                    <p className="text-sm text-gray-500">
-                      {form.connections.length} connection
-                      {form.connections.length !== 1 && "s"}
-                    </p>
-                  </div>
-                </Link>
+                <div key={form.id} className="flex items-center">
+                  <Link
+                    href={`/form/${form.id}`}
+                    className="card bg-base-100 border border-base-300 hover:bg-base-200 transition-colors grow"
+                  >
+                    <div className="card-body flex flex-row items-center justify-between">
+                      <div className="flex flex-col">
+                        <h2 className="card-title">{form.title}</h2>
+                        <p className="text-sm text-gray-500">
+                          {form.connections.length} connection
+                          {form.connections.length !== 1 && "s"}
+                        </p>
+                      </div>
+                      <IconEdit className="w-5 h-5 text-gray-400" />
+                    </div>
+                  </Link>
+                  <DeleteFormButton formId={form.id} />
+                </div>
               ))}
             </div>
           )}

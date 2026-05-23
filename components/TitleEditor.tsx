@@ -7,10 +7,12 @@ export default function TitleEditor({
   formFields,
   defaultValue = "",
   name = "title",
+  onChange,
 }: {
   formFields: ParsedFormField[];
   defaultValue?: string;
   name?: string;
+  onChange?: (value: string) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [value, setValue] = useState(defaultValue);
@@ -23,6 +25,7 @@ export default function TitleEditor({
     const token = `{{${questionId}}}`;
     const newValue = value.slice(0, start) + token + value.slice(end);
     setValue(newValue);
+    onChange?.(newValue);
     requestAnimationFrame(() => {
       input.setSelectionRange(start + token.length, start + token.length);
       input.focus();
