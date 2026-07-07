@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { exchangeCode, discoverLaunchpad } from "@37signals/basecamp/oauth";
 import { db } from "@/lib/db";
 
 export async function GET(req: NextRequest) {
@@ -15,36 +16,26 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(new URL("/setup?error=missing_code", req.url));
   }
 
-  const tokenRes = await fetch(
-    "https://launchpad.37signals.com/authorization/token",
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        type: "web_server",
-        client_id: process.env.BASECAMP_CLIENT_ID!,
-        client_secret: process.env.BASECAMP_CLIENT_SECRET!,
-        redirect_uri: `${process.env.APP_URL}/api/auth/basecamp`,
-        code,
-      }),
-    },
-  );
-
-  if (!tokenRes.ok) {
-    const text = await tokenRes.text();
-    console.error("Basecamp token exchange failed:", text);
+  let token;
+  try {
+    const config = await discoverLaunchpad();
+    token = await exchangeCode({
+      tokenEndpoint: config.tokenEndpoint,
+      code,
+      redirectUri: `${process.env.APP_URL}/api/auth/basecamp`,
+      clientId: process.env.BASECAMP_CLIENT_ID!,
+      clientSecret: process.env.BASECAMP_CLIENT_SECRET!,
+      useLegacyFormat: true,
+    });
+  } catch (err) {
+    console.error("Basecamp token exchange failed:", err);
     return NextResponse.redirect(
       new URL("/setup?error=token_exchange_failed", req.url),
     );
   }
 
-  const tokenData = (await tokenRes.json()) as {
-    access_token: string;
-    refresh_token: string;
-    expires_in: number;
-  };
-
-  const expiresAt = Date.now() + tokenData.expires_in * 1000 - 60_000;
+  const expiresAt = token.expiresAt?.getTime()
+    ?? Date.now() + (token.expiresIn ?? 7200) * 1000 - 60_000;
 
   // Fetch the account ID from the Basecamp authorization endpoint
   let accountId: string;
@@ -52,7 +43,7 @@ export async function GET(req: NextRequest) {
     const authRes = await fetch(
       "https://launchpad.37signals.com/authorization.json",
       {
-        headers: { Authorization: `Bearer ${tokenData.access_token}` },
+        headers: { Authorization: `Bearer ${token.accessToken}` },
       },
     );
     if (!authRes.ok) {
@@ -76,16 +67,13 @@ export async function GET(req: NextRequest) {
   await Promise.all([
     db.setting.upsert({
       where: { key: "basecamp_access_token" },
-      update: { value: tokenData.access_token },
-      create: { key: "basecamp_access_token", value: tokenData.access_token },
+      update: { value: token.accessToken },
+      create: { key: "basecamp_access_token", value: token.accessToken },
     }),
     db.setting.upsert({
       where: { key: "basecamp_refresh_token" },
-      update: { value: tokenData.refresh_token },
-      create: {
-        key: "basecamp_refresh_token",
-        value: tokenData.refresh_token,
-      },
+      update: { value: token.refreshToken! },
+      create: { key: "basecamp_refresh_token", value: token.refreshToken! },
     }),
     db.setting.upsert({
       where: { key: "basecamp_token_expires_at" },

@@ -7,6 +7,7 @@ import { useToast } from "./ToastProvider";
 import { useConnections } from "./ConnectionsContext";
 import FormEditor from "./FormEditor";
 import TitleEditor from "./TitleEditor";
+import BasecampDestinationPicker from "./BasecampDestinationPicker";
 import { IconPlugConnected } from "@tabler/icons-react";
 
 interface ConnectionData {
@@ -17,15 +18,25 @@ interface ConnectionData {
   routingQuestionId: string | null;
   routingValue: string | null;
   exclusive: boolean;
-  basecampUrl: string;
+  basecampProjectId: string;
+  basecampSubItemId: string;
+  basecampProjectName: string;
+  basecampSubItemName: string;
+}
+
+interface RecentProject {
+  id: string;
+  name: string;
 }
 
 export default function ConnectionCard({
   connection,
   formFields,
+  recentProjects,
 }: {
   connection: ConnectionData;
   formFields: ParsedFormField[];
+  recentProjects: RecentProject[];
 }) {
   const toast = useToast();
   const { markDirty, markClean, registerSaver, unregisterSaver } = useConnections();
@@ -43,6 +54,15 @@ export default function ConnectionCard({
     connection.routingValue ?? ""
   );
   const [exclusive, setExclusive] = useState(connection.exclusive);
+  const [itemType, setItemType] = useState<"card" | "todo">(
+    connection.type === "BASECAMP_CARD" ? "card" : "todo"
+  );
+  const [dest, setDest] = useState({
+    projectId: connection.basecampProjectId,
+    subItemId: connection.basecampSubItemId,
+    projectName: connection.basecampProjectName,
+    subItemName: connection.basecampSubItemName,
+  });
 
   const selectedField = formFields.find(
     (f) => f.questionId === routingQuestionId
@@ -51,6 +71,22 @@ export default function ConnectionCard({
   const handleAnyChange = useCallback(() => {
     if (mountedRef.current) markDirty(connection.id);
   }, [connection.id, markDirty]);
+
+  const handleDestChange = useCallback(
+    (newDest: typeof dest) => {
+      setDest(newDest);
+      if (mountedRef.current) markDirty(connection.id);
+    },
+    [connection.id, markDirty],
+  );
+
+  const handleTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const next = e.target.value as "card" | "todo";
+    setItemType(next);
+    // Clear destination when switching types — columns vs todolists are incompatible
+    setDest({ projectId: "", subItemId: "", projectName: "", subItemName: "" });
+    handleAnyChange();
+  };
 
   const executeSave = useCallback(async () => {
     const form = formRef.current;
@@ -97,6 +133,8 @@ export default function ConnectionCard({
       }
     });
   };
+
+  const basecampType = itemType === "card" ? "BASECAMP_CARD" : "BASECAMP_TODO";
 
   return (
     <div className="card bg-base-200 mt-4">
@@ -157,19 +195,19 @@ export default function ConnectionCard({
           )}
         </div>
 
-          <div className="flex items-center gap-2 mt-3">
-            <input
-              type="checkbox"
-              id={`exclusive-${connection.id}`}
-              name="exclusive"
-              className="checkbox checkbox-sm"
-              checked={exclusive}
-              onChange={(e) => setExclusive(e.target.checked)}
-            />
-            <label htmlFor={`exclusive-${connection.id}`} className="label-text cursor-pointer">
-              Exclusive — suppress default connections when this one fires
-            </label>
-          </div>
+        <div className="flex items-center gap-2 mt-3">
+          <input
+            type="checkbox"
+            id={`exclusive-${connection.id}`}
+            name="exclusive"
+            className="checkbox checkbox-sm"
+            checked={exclusive}
+            onChange={(e) => setExclusive(e.target.checked)}
+          />
+          <label htmlFor={`exclusive-${connection.id}`} className="label-text cursor-pointer">
+            Exclusive — suppress default connections when this one fires
+          </label>
+        </div>
 
         {/* Basecamp target */}
         <div className="flex flex-wrap items-end gap-3 mt-4">
@@ -180,7 +218,8 @@ export default function ConnectionCard({
             <select
               className="select select-sm"
               name="itemType"
-              defaultValue={connection.type === "BASECAMP_CARD" ? "card" : "todo"}
+              value={itemType}
+              onChange={handleTypeChange}
             >
               <option value="card">Card</option>
               <option value="todo">Todo</option>
@@ -189,17 +228,25 @@ export default function ConnectionCard({
 
           <div className="flex flex-col flex-1 min-w-60">
             <label className="label">
-              <span className="label-text">Basecamp URL</span>
+              <span className="label-text">Destination</span>
             </label>
-            <input
-              className="input input-sm w-full"
-              name="basecampUrl"
-              defaultValue={connection.basecampUrl}
-              placeholder="https://3.basecamp.com/..."
-              required
+            <BasecampDestinationPicker
+              type={basecampType}
+              projectId={dest.projectId}
+              subItemId={dest.subItemId}
+              projectName={dest.projectName}
+              subItemName={dest.subItemName}
+              recentProjects={recentProjects}
+              onChange={handleDestChange}
             />
           </div>
         </div>
+
+        {/* Hidden inputs carrying destination to the form action */}
+        <input type="hidden" name="basecampProjectId" value={dest.projectId} />
+        <input type="hidden" name="basecampSubItemId" value={dest.subItemId} />
+        <input type="hidden" name="basecampProjectName" value={dest.projectName} />
+        <input type="hidden" name="basecampSubItemName" value={dest.subItemName} />
 
         {/* Title editor */}
         <label className="label mt-4">
@@ -238,7 +285,7 @@ export default function ConnectionCard({
             <button
               type="button"
               onClick={handleTest}
-              disabled={testPending || !connection.basecampUrl}
+              disabled={testPending || !dest.subItemId}
               className="btn btn-outline btn-sm"
             >
               {testPending ? (

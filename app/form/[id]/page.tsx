@@ -7,7 +7,6 @@ import SaveBar from "@/components/SaveBar";
 import { readData } from "@/lib/actions/read";
 import { db } from "@/lib/db";
 import { parseFormFields } from "@/lib/utils/google";
-import { buildBasecampUrl } from "@/lib/utils/basecamp";
 import { IconChevronLeft, IconMessages } from "@tabler/icons-react";
 import Link from "next/link";
 import { Suspense } from "react";
@@ -22,10 +21,21 @@ export default async function FormPage({
 }) {
   const [{ id }, { error }] = await Promise.all([params, searchParams]);
 
-  const formData = await db.form.findUnique({
-    where: { id },
-    include: { connections: true },
-  });
+  const [formData, recentProjectRows] = await Promise.all([
+    db.form.findUnique({ where: { id }, include: { connections: true } }),
+    db.connection.findMany({
+      where: { formId: id, basecampProjectId: { not: "" } },
+      select: { basecampProjectId: true, basecampProjectName: true },
+      distinct: ["basecampProjectId"],
+      orderBy: { updatedAt: "desc" },
+      take: 5,
+    }),
+  ]);
+
+  const recentProjects = recentProjectRows.map((r) => ({
+    id: r.basecampProjectId,
+    name: r.basecampProjectName || r.basecampProjectId,
+  }));
 
   const formFields = parseFormFields(formData?.formFields);
   const formUrl = formData
@@ -112,16 +122,13 @@ export default async function FormPage({
                 routingQuestionId: c.routingQuestionId,
                 routingValue: c.routingValue,
                 exclusive: c.exclusive,
-                basecampUrl:
-                  c.basecampProjectId && c.basecampSubItemId
-                    ? buildBasecampUrl(
-                        c.type,
-                        c.basecampProjectId,
-                        c.basecampSubItemId,
-                      )
-                    : "",
+                basecampProjectId: c.basecampProjectId,
+                basecampSubItemId: c.basecampSubItemId,
+                basecampProjectName: c.basecampProjectName,
+                basecampSubItemName: c.basecampSubItemName,
               }}
               formFields={formFields}
+              recentProjects={recentProjects}
             />
           ))}
         </main>

@@ -5,9 +5,9 @@ export function buildBasecampUrl(
 ): string {
   const orgId = process.env.BASECAMP_ORG_ID;
   if (type === "BASECAMP_CARD") {
-    return `https://3.basecamp.com/${orgId}/buckets/${projectId}/card_tables/columns/${subItemId}`;
+    return `https://app.basecamp.com/${orgId}/buckets/${projectId}/card_tables/columns/${subItemId}`;
   }
-  return `https://3.basecamp.com/${orgId}/buckets/${projectId}/todolists/${subItemId}`;
+  return `https://app.basecamp.com/${orgId}/buckets/${projectId}/todolists/${subItemId}`;
 }
 
 export function getIdsFromBasecampURL(
@@ -16,7 +16,7 @@ export function getIdsFromBasecampURL(
   try {
     const parsed = new URL(url);
     if (
-      parsed.hostname === "3.basecamp.com" &&
+      parsed.hostname === "app.basecamp.com" &&
       parsed.pathname.startsWith(`/${process.env.BASECAMP_ORG_ID}/buckets/`)
     ) {
       const parts = parsed.pathname.split("/");

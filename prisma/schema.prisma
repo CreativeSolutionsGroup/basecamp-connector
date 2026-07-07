@@ -45,8 +45,10 @@ model Connection {
   title   String         @default("") @map("title")
   content String         @map("content")
 
-  basecampProjectId String @map("basecamp_project_id")
-  basecampSubItemId String @map("basecamp_sub_item_id")
+  basecampProjectId   String @map("basecamp_project_id")
+  basecampSubItemId   String @map("basecamp_sub_item_id")
+  basecampProjectName String @default("") @map("basecamp_project_name")
+  basecampSubItemName String @default("") @map("basecamp_sub_item_name")
 
   routingQuestionId String? @map("routing_question_id")
   routingValue      String? @map("routing_value")

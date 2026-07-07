@@ -15,7 +15,7 @@ function onInstall(e) {
 }
 
 function installTrigger() {
-  removeTrigger();
+  removeTriggerForForm_(FormApp.getActiveForm().getId());
   ScriptApp.newTrigger("onFormSubmit")
     .forForm(FormApp.getActiveForm())
     .onFormSubmit()
@@ -24,10 +24,18 @@ function installTrigger() {
 }
 
 function removeTrigger() {
-  ScriptApp.getProjectTriggers().forEach(t => {
-    if (t.getHandlerFunction() === "onFormSubmit") ScriptApp.deleteTrigger(t);
-  });
+  removeTriggerForForm_(FormApp.getActiveForm().getId());
   FormApp.getUi().alert("Basecamp sync disabled.");
+}
+
+// Private helper: deletes onFormSubmit triggers scoped to a specific form only.
+// Trailing underscore is the Apps Script convention for private functions.
+function removeTriggerForForm_(formId) {
+  ScriptApp.getProjectTriggers().forEach(t => {
+    if (t.getHandlerFunction() === "onFormSubmit" && t.getTriggerSourceId() === formId) {
+      ScriptApp.deleteTrigger(t);
+    }
+  });
 }
 
 function onFormSubmit(e) {

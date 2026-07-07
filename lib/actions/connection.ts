@@ -2,7 +2,6 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "../db";
-import { getIdsFromBasecampURL } from "../utils/basecamp";
 import { testBasecampDestination } from "../basecamp";
 
 type ActionResult = { success: true } | { success: false; error: string };
@@ -30,7 +29,6 @@ export async function updateConnection(
   connectionId: string,
   formData: FormData
 ): Promise<ActionResult> {
-  const basecampUrl = formData.get("basecampUrl") as string;
   const type =
     formData.get("itemType") === "card" ? "BASECAMP_CARD" : "BASECAMP_TODO";
   const title = (formData.get("title") as string) ?? "";
@@ -42,16 +40,24 @@ export async function updateConnection(
     : null;
   const exclusive = formData.get("exclusive") === "on";
 
-  const ids = getIdsFromBasecampURL(basecampUrl);
-  if (!ids) return { success: false, error: "Invalid Basecamp URL" };
+  const basecampProjectId = (formData.get("basecampProjectId") as string) ?? "";
+  const basecampSubItemId = (formData.get("basecampSubItemId") as string) ?? "";
+  const basecampProjectName = (formData.get("basecampProjectName") as string) ?? "";
+  const basecampSubItemName = (formData.get("basecampSubItemName") as string) ?? "";
+
+  if (!basecampProjectId || !basecampSubItemId) {
+    return { success: false, error: "No Basecamp destination selected." };
+  }
 
   try {
     const connection = await db.connection.update({
       where: { id: connectionId },
       data: {
         type,
-        basecampProjectId: ids.projectId,
-        basecampSubItemId: ids.subItemId,
+        basecampProjectId,
+        basecampSubItemId,
+        basecampProjectName,
+        basecampSubItemName,
         title,
         content,
         routingQuestionId,
